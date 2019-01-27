@@ -57,12 +57,6 @@ let webConfig = {
 								less: 'vue-style-loader!css-loader!less-loader'
 							}
 						}
-					},
-					{
-						loader: 'iview-loader',
-						options: {
-							prefix: true
-						}
 					}
 				]
 			},

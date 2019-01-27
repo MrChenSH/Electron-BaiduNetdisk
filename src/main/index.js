@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, Menu, session } from 'electron'
 
 /**
  * Set `__static` path to static files in production
@@ -20,15 +20,21 @@ function createWindow() {
 	mainWindow = new BrowserWindow({
 		height: 800,
 		width: 1000,
+		// minWidth: 1000,
+		// minHeight: 660,
 		frame: false,
-		useContentSize: true
+		useContentSize: true,
+		webPreferences: { webSecurity: false }
 	})
 
+	// mainWindow.loadURL('https://pan.baidu.com/')
 	mainWindow.loadURL(winURL)
 
 	mainWindow.on('closed', () => {
 		mainWindow = null
 	})
+
+	Menu.setApplicationMenu(null)
 }
 
 app.on('ready', createWindow)
