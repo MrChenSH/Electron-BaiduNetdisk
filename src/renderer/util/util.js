@@ -1,4 +1,3 @@
-import fs from 'fs'
 import axios from 'axios'
 import electron from 'electron'
 import constant from '../store/constant'
@@ -7,8 +6,29 @@ const units = [' B', ' kB', ' MB', ' GB', ' TB', ' EB']
 export default {
 	test() {
 		console.log(this, Array.from(arguments))
-		// console.log(electron)
-		return true
+		console.log(electron)
+	},
+	/**
+	 * 最小化窗口
+	 */
+	minimize() {
+		electron.remote.getCurrentWindow().minimize()
+	},
+	/**
+	 * 最大化或还原窗口
+	 */
+	maximizeOrRestore() {
+		let currentWin = electron.remote.getCurrentWindow()
+		currentWin[currentWin.isMaximized() ? 'unmaximize' : 'maximize']()
+	},
+	/**
+	 * 关闭窗口
+	 */
+	close() {
+		// 退出程序
+		// electron.remote.app.quit()
+		// 关闭当前窗口
+		electron.remote.getCurrentWindow().close()
 	},
 	showOpenDialog(options, callback) {
 		electron.remote.dialog.showOpenDialog(electron.remote.getCurrentWindow(), options, callback)

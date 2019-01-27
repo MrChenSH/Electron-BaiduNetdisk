@@ -192,14 +192,15 @@
 						:selected="selectionRows.includes(file)"
 						@contextmenu.native="e => {e.stopPropagation();if (selectionRows.length <= 1)selectionRow = file}"
 					>
-						<div v-if="file.category === 1 || file.category === 3" class="icon fileicon-large-video">
+						<div :class="'icon ' + getFileIconClass(file, true)">
 							<img
 								:src="file.thumbs.url3"
 								@error="e => e.target.hidden = true"
 								style="max-width: 100%;max-height: 80px;"
+								v-if="file.category === 1 || file.category === 3"
+								@load="e => e.target.parentNode.style.background = 'transparent'"
 							>
 						</div>
-						<div v-else :class="'icon ' + getFileIconClass(file, true)"></div>
 						<RenameForm v-if="file.editing" :file="file" :listView="listView" @commitEdit="commitEdit"/>
 						<small v-else class="text">{{ file.server_filename }}</small>
 					</el-col>
@@ -442,6 +443,7 @@ export default {
 		loadFiles(param) {
 			let me = this
 
+			me.files = []
 			me.fileLoading = true
 
 			if (param === undefined) {

@@ -2,7 +2,6 @@ import Vue from 'vue'
 
 import App from './App'
 // import store from './store'
-// import router from './router'
 import util from './util/util'
 import selectable from './util/v-selectable'
 import constant from './store/constant'
@@ -73,7 +72,6 @@ util
 	.then(() => {
 		new Vue({
 			// store,
-			// router,
 			template: '<App/>',
 			components: { App }
 		}).$mount('#app')

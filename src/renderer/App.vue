@@ -8,9 +8,9 @@
 				<el-col></el-col>
 				<el-col :span="1" class="action-group">
 					<el-button-group>
-						<el-button plain icon="el-icon-minus" class="action"></el-button>
-						<el-button plain icon="el-icon-rank" class="action"></el-button>
-						<el-button plain icon="el-icon-close" class="action"></el-button>
+						<el-button plain icon="el-icon-minus" class="action" @click="minimize"></el-button>
+						<el-button plain icon="el-icon-rank" class="action" @click="maximizeOrRestore"></el-button>
+						<el-button plain icon="el-icon-close" class="action" @click="close"></el-button>
 					</el-button-group>
 					<el-popover trigger="hover" :title="YUN_DATA.username" class="avatar-popover">
 						<div slot="reference">
