@@ -12,19 +12,6 @@ export default (Vue, options = {}) => {
 		return isPointInner(x1, y1, a) && isPointInner(x2, y2, a) && isPointInner(x1, y1, b) && isPointInner(x2, y2, b)
 	}
 
-	const getSelections = children => {
-		let selections = []
-		children.forEach((child, i) => {
-			if (child.hasAttribute('selected')) {
-				selections.push({
-					node: child,
-					index: i
-				})
-			}
-		})
-		return selections
-	}
-
 	const style = document.createElement('style')
 
 	style.type = 'text/css'
@@ -37,11 +24,13 @@ export default (Vue, options = {}) => {
 		let startX = 0,
 			startY = 0,
 			children = [],
+			selections = [],
+			deselections = [],
 			isMouseMove = false,
 			isMouseDown = false,
 			selector = (binding.value || {}).selector,
 			areaSelect = document.createElement('div'),
-			selectedClass = (binding.value || {}).selectedClass || 'selected'
+			selectedClass = (binding.value || {}).selectedClass
 
 		Object.assign(areaSelect.style, {
 			zIndex: 99999,
@@ -56,6 +45,7 @@ export default (Vue, options = {}) => {
 
 			startX = e.pageX
 			startY = e.pageY
+			deselections = []
 			isMouseMove = false
 			areaSelect.style.display = 'none'
 			children = selector ? Array.from(ele.querySelectorAll(selector)) : Array.from(ele.children)
@@ -67,21 +57,17 @@ export default (Vue, options = {}) => {
 				ele.classList.add('text-select-none')
 			}
 
-			let changes = []
-
 			children.forEach((child, i) => {
 				if (child.hasAttribute('selected')) {
 					child.removeAttribute('selected')
 					child.classList.remove(selectedClass)
-					changes.push({
+					deselections.push({
 						index: i,
 						node: child,
 						selected: false
 					})
 				}
 			})
-
-			vnode.componentInstance.$emit('select-change', getSelections(children), changes)
 		})
 
 		ele.addEventListener('mouseup', e => {
@@ -93,7 +79,7 @@ export default (Vue, options = {}) => {
 			}
 			if (isMouseMove) {
 				isMouseMove = false
-				vnode.componentInstance.$emit('select-end', getSelections(children))
+				vnode.componentInstance.$emit('select-end', selections)
 			}
 		})
 
@@ -107,6 +93,7 @@ export default (Vue, options = {}) => {
 				}
 
 				if (range.width && range.width) {
+					selections = []
 					isMouseMove = true
 					Object.assign(areaSelect.style, {
 						display: 'block',
@@ -116,7 +103,9 @@ export default (Vue, options = {}) => {
 						height: range.height + 'px'
 					})
 
-					let changes = []
+					let changes = Array.from(deselections)
+
+					deselections = []
 
 					children.forEach((child, i) => {
 						let win = child.ownerDocument.defaultView,
@@ -129,14 +118,18 @@ export default (Vue, options = {}) => {
 
 						if (isIntersectArea(range, offset)) {
 							if (!child.hasAttribute('selected')) {
-								child.classList.add(selectedClass)
 								child.setAttribute('selected', 'selected')
+								if (selectedClass) child.classList.add(selectedClass)
 								changes.push({
 									index: i,
 									node: child,
 									selected: true
 								})
 							}
+							selections.push({
+								index: i,
+								node: child
+							})
 						} else {
 							if (child.hasAttribute('selected')) {
 								child.removeAttribute('selected')
@@ -150,7 +143,7 @@ export default (Vue, options = {}) => {
 						}
 					})
 
-					vnode.componentInstance.$emit('select-change', getSelections(children), changes)
+					if (changes.length) vnode.componentInstance.$emit('select-change', selections, changes)
 				}
 			}
 		})

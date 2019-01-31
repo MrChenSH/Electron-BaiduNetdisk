@@ -9,7 +9,7 @@
 						"targets": { "node": 7 }
 					}
 				],
-				"stage-0"
+				"es2015"
 			],
 			"plugins": ["istanbul"]
 		},
@@ -21,7 +21,7 @@
 						"targets": { "node": 7 }
 					}
 				],
-				"stage-0"
+				"es2015"
 			]
 		},
 		"renderer": {
@@ -32,7 +32,7 @@
 						"modules": false
 					}
 				],
-				"stage-0"
+				"es2015"
 			]
 		},
 		"web": {
@@ -43,9 +43,9 @@
 						"modules": false
 					}
 				],
-				"stage-0"
+				"es2015"
 			]
 		}
 	},
-	"plugins": ["transform-runtime"]
+	"plugins": ["transform-vue-jsx", "transform-runtime"]
 }

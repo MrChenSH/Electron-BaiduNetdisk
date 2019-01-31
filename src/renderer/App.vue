@@ -8,9 +8,10 @@
 				<el-col></el-col>
 				<el-col :span="1" class="action-group">
 					<el-button-group>
-						<el-button plain icon="el-icon-minus" class="action" @click="minimize"></el-button>
-						<el-button plain icon="el-icon-rank" class="action" @click="maximizeOrRestore"></el-button>
-						<el-button plain icon="el-icon-close" class="action" @click="close"></el-button>
+						<el-button plain icon="window-icon window-minimize" @click="minimize"></el-button>
+						<el-button plain v-if="!maximized" icon="window-icon window-maximize" @click="maximize"></el-button>
+						<el-button plain v-else icon="window-icon window-unmaximize" @click="unmaximize"></el-button>
+						<el-button plain icon="window-icon window-close" @click="close"></el-button>
 					</el-button-group>
 					<el-popover trigger="hover" :title="YUN_DATA.username" class="avatar-popover">
 						<div slot="reference">
@@ -61,6 +62,7 @@ export default {
 		return {
 			activeTab: 'home',
 			quota: { used: 0, total: 1 },
+			maximized: this.isMaximized(),
 			tabs: [
 				{
 					name: 'home',
@@ -91,12 +93,14 @@ export default {
 		OfflineDownload: () => import('@/components/OfflineDownload'),
 		ResourceSearch: () => import('@/components/ResourceSearch')
 	},
+	watch: {},
 	created() {
 		this.getQuota()
 		// console.log(this)
 	},
-	watch: {},
-	computed: {},
+	mounted() {
+		window.addEventListener('resize', () => (this.maximized = this.isMaximized()))
+	},
 	methods: {
 		/**
 		 *获取网盘配额信息

@@ -99,9 +99,9 @@
 							style="margin-left: 10px;"
 						></el-button>
 					</el-col>
-					<el-col>
+					<el-col @resize.native="test">
 						<span class="split"></span>
-						<el-breadcrumb separator-class="el-icon-arrow-right">
+						<el-breadcrumb @resize.native="test" separator-class="el-icon-arrow-right">
 							<el-breadcrumb-item
 								to="/"
 								v-for="(item, i) in paths"
@@ -185,12 +185,11 @@
 						class="thumb-item"
 						v-for="file in files"
 						:key="file.fs_id"
-						v-contextmenu:rowContextMenu
 						:title="file.server_filename"
 						@click.native="selectionRow = file"
 						@dblclick.native="onClickToOpen(file)"
 						:selected="selectionRows.includes(file)"
-						@contextmenu.native="e => {e.stopPropagation();if (selectionRows.length <= 1)selectionRow = file}"
+						@contextmenu.native="e => onRowContextMenu(file, e)"
 					>
 						<div :class="'icon ' + getFileIconClass(file, true)">
 							<img
@@ -201,7 +200,12 @@
 								@load="e => e.target.parentNode.style.background = 'transparent'"
 							>
 						</div>
-						<RenameForm v-if="file.editing" :file="file" :listView="listView" @commitEdit="commitEdit"/>
+						<RenameForm
+							:file="file"
+							:listView="listView"
+							@commitEdit="commitEdit"
+							v-if="file.editing && selectionRows.includes(file)"
+						/>
 						<small v-else class="text">{{ file.server_filename }}</small>
 					</el-col>
 					<el-col :span="1" class="action" v-if="files.length">
@@ -212,7 +216,7 @@
 			</el-main>
 			<el-footer height>
 				<el-row type="flex" style="height: 32px;align-items: center;">
-					<el-col :span="1">
+					<el-col :span="2">
 						<small style="padding-left: 10px;">{{ pager.total }}项</small>
 					</el-col>
 					<el-col v-if="pager.count > 1" style="text-align: right">

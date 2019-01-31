@@ -17,18 +17,32 @@ export default {
 	/**
 	 * 最大化或还原窗口
 	 */
-	maximizeOrRestore() {
-		let currentWin = electron.remote.getCurrentWindow()
-		currentWin[currentWin.isMaximized() ? 'unmaximize' : 'maximize']()
+	maximize() {
+		electron.remote.getCurrentWindow().maximize()
+	},
+	/**
+	 * 还原窗口
+	 */
+	unmaximize() {
+		electron.remote.getCurrentWindow().unmaximize()
+	},
+	/**
+	 * 窗口是否最大化
+	 */
+	isMaximized() {
+		return electron.remote.getCurrentWindow().isMaximized()
 	},
 	/**
 	 * 关闭窗口
 	 */
 	close() {
-		// 退出程序
-		// electron.remote.app.quit()
-		// 关闭当前窗口
 		electron.remote.getCurrentWindow().close()
+	},
+	/**
+	 * 退出程序
+	 */
+	quit() {
+		electron.remote.app.quit()
 	},
 	showOpenDialog(options, callback) {
 		electron.remote.dialog.showOpenDialog(electron.remote.getCurrentWindow(), options, callback)
@@ -49,26 +63,24 @@ export default {
 	/**
 	 * 根据文件名获取文件图标
 	 *
-	 * @param {Object} file
+	 * @param {Object} file 网盘文件信息
+	 * @param {Boolean} large 是否显示大图标
 	 */
 	getFileIconClass(file, large) {
-		let me = this,
-			iconClass = me.ICONS.default.iconClass
-		if (me._isVue) {
-			if (file.isdir) {
-				if (file.path.startsWith('/apps')) iconClass = me.ICONS.apps.iconClass
-				else iconClass = me.ICONS.dir.iconClass
-			} else {
-				for (let key in me.ICONS) {
-					let item = me.ICONS[key]
-					if (item.regex && item.regex.test(file.server_filename.toLowerCase())) {
-						iconClass = item.iconClass
-						break
-					}
+		let iconClass = constant.ICONS.default.iconClass
+
+		if (file.isdir) {
+			if (file.path.startsWith('/apps')) iconClass = constant.ICONS.apps.iconClass
+			else iconClass = constant.ICONS.dir.iconClass
+		} else {
+			for (let key in constant.ICONS) {
+				let item = constant.ICONS[key]
+				if (item.regex && item.regex.test(file.server_filename.toLowerCase())) {
+					iconClass = item.iconClass
+					break
 				}
 			}
 		}
-
 		if (large) iconClass = iconClass.replace('-small', '-large').replace('-s-', '-l-')
 
 		return iconClass
@@ -77,6 +89,8 @@ export default {
 	 * 将字节单位进行转换
 	 *
 	 * @param {Number} size 文件大小，单位字节
+	 * @param {Number} digit 单位数位{0-5}
+	 * @param {Number} fixed 精确多少位
 	 */
 	transferFileSize(size, digit, fixed) {
 		if (!size || isNaN(size)) return '0 B'
@@ -135,7 +149,9 @@ export default {
 					: f(224 | ((n >>> 12) & 15)) + f(128 | ((n >>> 6) & 63)) + f(128 | (63 & n))
 			}
 			let n = 65536 + 1024 * (e.charCodeAt(0) - 55296) + (e.charCodeAt(1) - 56320)
-			return f(240 | ((n >>> 18) & 7)) + f(128 | ((n >>> 12) & 63)) + f(128 | ((n >>> 6) & 63)) + f(128 | (63 & n))
+			return (
+				f(240 | ((n >>> 18) & 7)) + f(128 | ((n >>> 12) & 63)) + f(128 | ((n >>> 6) & 63)) + f(128 | (63 & n))
+			)
 		}
 		function g(e) {
 			return (e + '' + Math.random()).replace(d, l)
@@ -143,7 +159,9 @@ export default {
 		function m(e) {
 			let n = [0, 2, 1][e.length % 3]
 			let t =
-				(e.charCodeAt(0) << 16) | ((e.length > 1 ? e.charCodeAt(1) : 0) << 8) | (e.length > 2 ? e.charCodeAt(2) : 0)
+				(e.charCodeAt(0) << 16) |
+				((e.length > 1 ? e.charCodeAt(1) : 0) << 8) |
+				(e.length > 2 ? e.charCodeAt(2) : 0)
 			let o = [
 				u.charAt(t >>> 18),
 				u.charAt((t >>> 12) & 63),
@@ -217,7 +235,10 @@ Date.prototype.format = function(pattern) {
 	}
 	for (let k in o) {
 		if (new RegExp('(' + k + ')').test(pattern)) {
-			pattern = pattern.replace(RegExp.$1, RegExp.$1.length == 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length))
+			pattern = pattern.replace(
+				RegExp.$1,
+				RegExp.$1.length == 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length)
+			)
 		}
 	}
 	return pattern

@@ -9,6 +9,7 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
 import ElementUI from 'element-ui'
 import contentmenu from 'v-contextmenu'
+// import ElBigdataTable from 'vue-element-bigdata-table'
 import 'v-contextmenu/dist/index.css'
 import './styles/base.scss'
 import './styles/main.less'
@@ -67,8 +68,7 @@ Vue.axios.interceptors.response.use(
 )
 
 /* eslint-disable no-new */
-util
-	.visitHome()
+util.visitHome()
 	.then(() => {
 		new Vue({
 			// store,
