@@ -1,16 +1,16 @@
 <template>
 	<el-dialog fullscreen append-to-body custom-class="img-dialog" :visible.sync="visible">
-		<i class="el-icon-close" @click="$emit('close')"></i>
+		<i class="el-icon-close" @click="visible = false"></i>
 		<el-button
 			circle
 			class="left"
+			v-if="imageIndex > 0"
+			@click="imageIndex -= 1"
 			icon="el-icon-arrow-left"
-			:disabled="imageIndex === 0"
-			@click="loading = true, imageIndex -= 1"
 		></el-button>
 		<div
-			style="flex: 1;"
 			v-loading="loading"
+			style="height: 100%;"
 			element-loading-text="拼命加载中"
 			element-loading-background="rgba(0, 0, 0, 0.8)"
 		>
@@ -19,15 +19,15 @@
 				@load="loading = false"
 				v-if="images[imageIndex]"
 				:src="images[imageIndex].src"
-				:alt="images[imageIndex].name"
+				:alt="images[imageIndex].alt"
 			>
 		</div>
 		<el-button
 			circle
 			class="right"
+			@click="imageIndex += 1"
 			icon="el-icon-arrow-right"
-			@click="loading = true,imageIndex += 1;"
-			:disabled="imageIndex === images.length-1"
+			v-if="imageIndex < images.length - 1"
 		></el-button>
 	</el-dialog>
 </template>
@@ -54,6 +54,9 @@ export default {
 	watch: {
 		visible(visible) {
 			if (!visible) this.$emit('close')
+		},
+		imageIndex() {
+			this.loading = true
 		}
 	}
 }

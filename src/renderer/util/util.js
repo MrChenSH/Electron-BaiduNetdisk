@@ -1,56 +1,28 @@
 import axios from 'axios'
-import electron from 'electron'
 import constant from '../store/constant'
-const units = [' B', ' kB', ' MB', ' GB', ' TB', ' EB']
+import { remote } from 'electron'
+const units = [' B', ' KB', ' MB', ' GB', ' TB', ' EB']
 
 export default {
 	test() {
 		console.log(this, Array.from(arguments))
-		console.log(electron)
 	},
-	/**
-	 * 最小化窗口
-	 */
-	minimize() {
-		electron.remote.getCurrentWindow().minimize()
-	},
-	/**
-	 * 最大化或还原窗口
-	 */
-	maximize() {
-		electron.remote.getCurrentWindow().maximize()
-	},
-	/**
-	 * 还原窗口
-	 */
-	unmaximize() {
-		electron.remote.getCurrentWindow().unmaximize()
-	},
-	/**
-	 * 窗口是否最大化
-	 */
-	isMaximized() {
-		return electron.remote.getCurrentWindow().isMaximized()
-	},
-	/**
-	 * 关闭窗口
-	 */
-	close() {
-		electron.remote.getCurrentWindow().close()
-	},
-	/**
-	 * 退出程序
-	 */
-	quit() {
-		electron.remote.app.quit()
-	},
-	showOpenDialog(options, callback) {
-		electron.remote.dialog.showOpenDialog(electron.remote.getCurrentWindow(), options, callback)
+	showMenu(menu, selector) {
+		if (event) event.stopPropagation()
+		let pos = {}
+		if (selector) {
+			let rect = document.querySelector(selector).getBoundingClientRect()
+			pos = {
+				x: Math.round(rect.x),
+				y: Math.round(rect.y + rect.height)
+			}
+		}
+		menu.popup(pos)
 	},
 	visitHome() {
 		return new Promise((resolve, reject) => {
 			axios
-				.get(constant.URL.home, {
+				.get(constant.API.home, {
 					responseType: 'document'
 				})
 				.then(res => {
@@ -60,30 +32,46 @@ export default {
 				.catch(err => reject(err))
 		})
 	},
+	confirm(title, detail, message) {
+		return new Promise(resolve => {
+			remote.dialog.showMessageBox(
+				remote.getCurrentWindow(),
+				{
+					title: title,
+					detail: detail,
+					type: 'warning',
+					message: message,
+					buttons: ['Ok', 'Cancel'],
+					icon: 'static/images/question_32.png'
+				},
+				rs => resolve(rs === 0)
+			)
+		})
+	},
 	/**
-	 * 根据文件名获取文件图标
+	 *根据文件名获取文件图标
 	 *
 	 * @param {Object} file 网盘文件信息
-	 * @param {Boolean} large 是否显示大图标
+	 * @param {String} size 图标大小(Big,Middle,Small)
 	 */
-	getFileIconClass(file, large) {
-		let iconClass = constant.ICONS.default.iconClass
+	getFileIcon(file, size) {
+		let src = constant.ICONS.default.src
 
-		if (file.isdir) {
-			if (file.path.startsWith('/apps')) iconClass = constant.ICONS.apps.iconClass
-			else iconClass = constant.ICONS.dir.iconClass
+		if (Array.isArray(file.fsIds) && file.fsIds.length > 1) src = constant.ICONS.mix.src
+		else if (file.isdir) {
+			if (file.path.startsWith('/apps')) src = constant.ICONS.apps.src
+			else src = constant.ICONS.dir.src
 		} else {
 			for (let key in constant.ICONS) {
 				let item = constant.ICONS[key]
 				if (item.regex && item.regex.test(file.server_filename.toLowerCase())) {
-					iconClass = item.iconClass
+					src = item.src
 					break
 				}
 			}
 		}
-		if (large) iconClass = iconClass.replace('-small', '-large').replace('-s-', '-l-')
 
-		return iconClass
+		return src.replace('Middle', size || 'Middle')
 	},
 	/**
 	 * 将字节单位进行转换
@@ -115,22 +103,22 @@ export default {
 			a[q] = sign3.substr(q % v, 1).charCodeAt(0)
 			p[q] = q
 		}
-		for (let u = (q = 0); q < 256; q++) {
+		for (let u = 0, q = 0; q < 256; q++) {
 			u = (u + p[q] + a[q]) % 256
 			let t = p[q]
 			p[q] = p[u]
 			p[u] = t
 		}
-		for (let i = (u = q = 0); q < sign1.length; q++) {
+		for (let i = 0, u = 0, q = 0; q < sign1.length; q++) {
 			i = (i + 1) % 256
 			u = (u + p[i]) % 256
 			let t = p[i]
 			p[i] = p[u]
 			p[u] = t
-			k = p[(p[i] + p[u]) % 256]
+			let k = p[(p[i] + p[u]) % 256]
 			o += String.fromCharCode(sign1.charCodeAt(q) ^ k)
 		}
-		return o
+		return this.base64Encode(o)
 	},
 	/**
 	 * 生成每次请求logid
@@ -186,7 +174,42 @@ export default {
 				: p(String(e))
 		}
 		return w()
+	},
+	base64Encode(str) {
+		let a,
+			r,
+			e,
+			n,
+			i,
+			s,
+			o = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+		for (e = str.length, r = 0, a = ''; e > r; ) {
+			if (((n = 255 & str.charCodeAt(r++)), r == e)) {
+				a += o.charAt(n >> 2)
+				a += o.charAt((3 & n) << 4)
+				a += '=='
+				break
+			}
+			if (((i = str.charCodeAt(r++)), r == e)) {
+				a += o.charAt(n >> 2)
+				a += o.charAt(((3 & n) << 4) | ((240 & i) >> 4))
+				a += o.charAt((15 & i) << 2)
+				a += '='
+				break
+			}
+			s = str.charCodeAt(r++)
+			a += o.charAt(n >> 2)
+			a += o.charAt(((3 & n) << 4) | ((240 & i) >> 4))
+			a += o.charAt(((15 & i) << 2) | ((192 & s) >> 6))
+			a += o.charAt(63 & s)
+		}
+		return a
 	}
+}
+
+Object.isEmpty = obj => {
+	for (const key in obj) return false
+	return true
 }
 
 /**
@@ -242,4 +265,30 @@ Date.prototype.format = function(pattern) {
 		}
 	}
 	return pattern
+}
+
+/**
+ * 字符串预处理格式化
+ */
+String.prototype.format = function(args) {
+	let result = this
+	if (arguments.length > 0) {
+		let reg
+		if (arguments.length === 1 && typeof args === 'object') {
+			for (const key in args) {
+				if (args[key] !== undefined) {
+					reg = new RegExp('({' + key + '})', 'g')
+					result = result.replace(reg, args[key])
+				}
+			}
+		} else {
+			for (let i = 0; i < arguments.length; i++) {
+				if (arguments[i] !== undefined) {
+					reg = new RegExp('({[' + (i + 1) + ']})', 'g')
+					result = result.replace(reg, arguments[i])
+				}
+			}
+		}
+	}
+	return result.replace(/({[\d]})/g, '')
 }

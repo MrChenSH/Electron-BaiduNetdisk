@@ -2,38 +2,39 @@ import Vue from 'vue'
 
 import App from './App'
 // import store from './store'
-import util from './util/util'
-import selectable from './util/v-selectable'
-import constant from './store/constant'
-import axios from 'axios'
+import Util from './util'
+import Axios from 'axios'
+import router from './router'
 import VueAxios from 'vue-axios'
 import ElementUI from 'element-ui'
-import contentmenu from 'v-contextmenu'
-// import ElBigdataTable from 'vue-element-bigdata-table'
-import 'v-contextmenu/dist/index.css'
+import SvgIcon from 'vue2-svg-icon/Icon'
+import Selectable from './util/v-selectable'
+import ElBigdataTable from './components/bigdata-table'
+import ImgPreview from './components/dialogs/ImgPreview'
+
 import './styles/base.scss'
 import './styles/main.less'
-import './styles/index.css'
 
-Object.assign(Vue.prototype, util, constant)
+Vue.use(Util)
+Vue.use(Selectable)
+Vue.use(ElBigdataTable)
+Vue.use(VueAxios, Axios)
+Vue.component('svg-icon', SvgIcon)
+Vue.component('img-preview', ImgPreview)
+Vue.use(ElementUI, { size: 'mini' })
+
 Vue.config.productionTip = false
-Vue.use(selectable)
-Vue.use(contentmenu)
-Vue.use(VueAxios, axios)
-Vue.use(ElementUI, {
-	size: 'mini'
-})
-
 Vue.axios.interceptors.request.use(
 	req => {
 		req.params = req.params || {}
-		Object.assign(req.params, constant.BASE, {
-			logid: util.logid(),
-			bdstoken: constant.YUN_DATA.bdstoken
+		Object.assign(req.params, Vue.prototype.$constant.BASE, {
+			logid: Vue.prototype.$util.logid(),
+			bdstoken: Vue.prototype.$constant.YUN_DATA.bdstoken
 		})
 		return req
 	},
 	err => {
+		console.error(err)
 		Vue.prototype.$message({
 			type: 'error',
 			showClose: true,
@@ -57,7 +58,7 @@ Vue.axios.interceptors.response.use(
 		return res
 	},
 	err => {
-		console.log(err)
+		console.error(err)
 		Vue.prototype.$message({
 			type: 'error',
 			showClose: true,
@@ -68,19 +69,9 @@ Vue.axios.interceptors.response.use(
 )
 
 /* eslint-disable no-new */
-util.visitHome()
-	.then(() => {
-		new Vue({
-			// store,
-			template: '<App/>',
-			components: { App }
-		}).$mount('#app')
-	})
-	.catch(err => {
-		console.log(err)
-		Vue.prototype.$message({
-			type: 'error',
-			showClose: true,
-			message: err.toString()
-		})
-	})
+new Vue({
+	// store,
+	router,
+	template: '<App/>',
+	components: { App }
+}).$mount('#app')

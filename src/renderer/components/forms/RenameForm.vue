@@ -11,7 +11,7 @@
 		<el-form-item
 			required
 			prop="server_filename"
-			:rules="RULES.fileName"
+			:rules="$constant.RULES.fileName"
 			@keyup.esc.native="cancelEdit"
 			@keyup.enter.native="commitEdit"
 			@dblclick.native="e => e.stopPropagation()"
@@ -46,7 +46,6 @@ export default {
 			default: null
 		}
 	},
-	created() {},
 	mounted() {
 		this.startEdit()
 	},
@@ -96,11 +95,14 @@ export default {
 	}
 }
 
-.thumb-view-form .el-form-item {
-	margin: -5px;
-	/deep/input {
-		padding: 0 8px;
-		text-align: center;
+.thumb-view-form {
+	margin-top: -5px;
+	.el-form-item {
+		margin: 0px;
+		/deep/input {
+			padding: 0 8px;
+			text-align: center;
+		}
 	}
 }
 </style>

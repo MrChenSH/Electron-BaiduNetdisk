@@ -1,4 +1,6 @@
+.idea
 .DS_Store
+.history
 dist/electron/*
 dist/web/*
 build/*

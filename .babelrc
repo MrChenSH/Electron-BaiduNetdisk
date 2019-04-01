@@ -1,51 +1,5 @@
 {
 	"comments": false,
-	"env": {
-		"test": {
-			"presets": [
-				[
-					"env",
-					{
-						"targets": { "node": 7 }
-					}
-				],
-				"es2015"
-			],
-			"plugins": ["istanbul"]
-		},
-		"main": {
-			"presets": [
-				[
-					"env",
-					{
-						"targets": { "node": 7 }
-					}
-				],
-				"es2015"
-			]
-		},
-		"renderer": {
-			"presets": [
-				[
-					"env",
-					{
-						"modules": false
-					}
-				],
-				"es2015"
-			]
-		},
-		"web": {
-			"presets": [
-				[
-					"env",
-					{
-						"modules": false
-					}
-				],
-				"es2015"
-			]
-		}
-	},
-	"plugins": ["transform-vue-jsx", "transform-runtime"]
+	"presets": ["@babel/preset-env", "@vue/babel-preset-jsx"],
+	"plugins": ["@babel/plugin-syntax-dynamic-import"]
 }

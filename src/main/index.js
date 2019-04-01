@@ -1,4 +1,6 @@
-import { app, BrowserWindow, Menu, session } from 'electron'
+import { app, BrowserWindow, Menu, Tray } from 'electron'
+
+app.setName('百度网盘')
 
 /**
  * Set `__static` path to static files in production
@@ -23,7 +25,9 @@ function createWindow() {
 		// minWidth: 1000,
 		// minHeight: 660,
 		frame: false,
+		title: '百度网盘',
 		useContentSize: true,
+		icon: 'static/images/logo.ico',
 		webPreferences: { webSecurity: false }
 	})
 
@@ -35,6 +39,10 @@ function createWindow() {
 	})
 
 	Menu.setApplicationMenu(null)
+
+	app.tray = new Tray('static/images/logo.ico')
+	app.tray.setToolTip('百度网盘')
+	app.tray.on('click', () => mainWindow.show())
 }
 
 app.on('ready', createWindow)

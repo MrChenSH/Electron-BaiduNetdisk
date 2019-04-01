@@ -1,57 +1,75 @@
 <template>
-	<el-container id="app" style="height: 100%;width: 100%;position: absolute;">
+	<el-container style="height: 100%;width: 100%;position: absolute;">
 		<el-header height="75px" class="nav-header">
-			<el-row type="flex" align="middle" style="margin: 0;height: 75px;">
-				<el-col :span="1" style="min-width: 150px;">
-					<img src="~@/assets/logo.png">
+			<el-row type="flex" align="middle" style="height: 100%">
+				<el-col class="logo">
+					<img src="static/images/main_logo.png">
 				</el-col>
-				<el-col></el-col>
-				<el-col :span="1" class="action-group">
-					<el-button-group>
-						<el-button plain icon="window-icon window-minimize" @click="minimize"></el-button>
-						<el-button plain v-if="!maximized" icon="window-icon window-maximize" @click="maximize"></el-button>
-						<el-button plain v-else icon="window-icon window-unmaximize" @click="unmaximize"></el-button>
-						<el-button plain icon="window-icon window-close" @click="close"></el-button>
-					</el-button-group>
-					<el-popover trigger="hover" :title="YUN_DATA.username" class="avatar-popover">
-						<div slot="reference">
-							<img :src="YUN_DATA.photo" class="avatar">
-							<small>{{ YUN_DATA.username }}</small>
+				<el-col>
+					<el-menu router mode="horizontal" :default-active="$route.name || 'home'">
+						<el-menu-item
+							:key="route.name"
+							:index="route.name"
+							style="-webkit-app-region: no-drag"
+							v-for="route in $router.options.routes.filter(item => item.name)"
+							:route="{
+									path: route.name,
+									query: JSON.parse(localStorage[route.name + '_query'] || '{}')
+								}"
+						>{{route.title}}</el-menu-item>
+					</el-menu>
+				</el-col>
+				<el-col class="action-group">
+					<el-popover
+						width="228"
+						trigger="hover"
+						class="avatar-popover"
+						:visible-arrow="false"
+						placement="bottom-start"
+						popper-class="avatar-popover-content"
+					>
+						<img slot="reference" :src="avatar" class="avatar">
+						<div class="user-card">
+							<div>
+								<el-button type="text" class="username-btn">{{ $constant.YUN_DATA.username }}</el-button>
+								<el-progress
+									status="text"
+									color="#67C23A"
+									:stroke-width="6"
+									:percentage="quota.used / quota.total * 100"
+								>
+									<small>{{ quota.usedText + '/' + quota.totalText }}</small>
+								</el-progress>
+							</div>
 						</div>
-						<div>
-							<el-progress
-								color="#67C23A"
-								:show-text="false"
-								:stroke-width="8"
-								:percentage="quota.used / quota.total * 100"
-							></el-progress>
-							<small>{{ transferFileSize(quota.used, 3 , 0) + '/' + transferFileSize(quota.total, 3, 0) }}</small>
-							<el-menu>
-								<el-menu-item index="uploading">
-									<i class="el-icon-upload2"></i>
-									<small>正在上传(1)</small>
-								</el-menu-item>
-								<el-menu-item index="downloading">
-									<i class="el-icon-download"></i>
-									<small>正在下载(2)</small>
-								</el-menu-item>
-								<el-menu-item index="completed">
-									<i class="el-icon-check"></i>
-									<small>传输完成(3)</small>
-								</el-menu-item>
-							</el-menu>
+						<div class="user-card">
+							<el-button-group>
+								<el-button>个人中心</el-button>
+								<el-button>帮助中心</el-button>
+								<el-button>切换账号</el-button>
+								<el-button>退出</el-button>
+							</el-button-group>
 						</div>
 					</el-popover>
+					<el-button class="setting-btn" @click="$util.showMenu(menus.set,'.setting-btn')">
+						<svg-icon name="setting" w="18"></svg-icon>
+					</el-button>
+					<el-button @click="$electron.remote.getCurrentWindow().minimize()">
+						<svg-icon name="window-minimize" w="10"></svg-icon>
+					</el-button>
+					<el-button v-if="!maximized" @click="$electron.remote.getCurrentWindow().maximize()">
+						<svg-icon name="window-maximize" w="10"></svg-icon>
+					</el-button>
+					<el-button v-else @click="$electron.remote.getCurrentWindow().unmaximize()">
+						<svg-icon name="window-unmaximize" w="10"></svg-icon>
+					</el-button>
+					<el-button @click="$electron.remote.getCurrentWindow().close()" class="window-close">
+						<svg-icon name="window-close" w="10"></svg-icon>
+					</el-button>
 				</el-col>
 			</el-row>
 		</el-header>
-		<el-main style="display: flex;">
-			<el-tabs v-model="activeTab" class="main-tabs">
-				<el-tab-pane v-for="(tab, i) in tabs" :key="i" :label="tab.label" :name="tab.name">
-					<component :is="tab.component" :quota="quota" @activeTab="name => activeTab = name"/>
-				</el-tab-pane>
-			</el-tabs>
-		</el-main>
+		<router-view :quota="quota"/>
 	</el-container>
 </template>
 
@@ -59,66 +77,165 @@
 export default {
 	name: 'App',
 	data() {
+		const me = this
 		return {
-			activeTab: 'home',
-			quota: { used: 0, total: 1 },
-			maximized: this.isMaximized(),
-			tabs: [
-				{
-					name: 'home',
-					label: '我的网盘',
-					component: 'Home'
-				},
-				{
-					label: '传输列表',
-					name: 'transfer-list',
-					component: 'TransferList'
-				},
-				{
-					label: '离线下载',
-					name: 'offline-download',
-					component: 'OfflineDownload'
-				},
-				{
-					label: '资源搜索',
-					name: 'resource-search',
-					component: 'ResourceSearch'
-				}
-			]
+			localStorage: localStorage,
+			avatar: 'static/images/logo.ico',
+			quota: {
+				used: 0,
+				total: 1,
+				usedText: '0GB',
+				totalText: '0GB'
+			},
+			maximized: me.$electron.remote.getCurrentWindow().isMaximized(),
+			menus: {
+				set: me.$electron.remote.Menu.buildFromTemplate([
+					{
+						label: '开始全部任务',
+						icon: 'static/images/play.png'
+					},
+					{
+						label: '暂停全部任务',
+						icon: 'static/images/pause.png'
+					},
+					{
+						label: '本次传输完成关机',
+						type: 'checkbox'
+					},
+					{
+						label: '隐藏悬浮框',
+						type: 'checkbox'
+					},
+					{
+						label: '锁定网盘',
+						icon: 'static/images/lock.png'
+					},
+					{
+						label: '设置',
+						icon: 'static/images/setting.png'
+					},
+					{
+						label: '关于'
+					},
+					{
+						label: '检查更新'
+					},
+					{
+						label: '问题反馈',
+						icon: 'static/images/question.png',
+						click: () =>
+							me.$electron.shell.openExternal('https://github.com/MrChenSH/Electron-BaiduNetdisk')
+					}
+				]),
+				tray: me.$electron.remote.Menu.buildFromTemplate([]),
+				trayTemplate: [
+					{ label: '百度网盘' },
+					{ label: '已用：{1}GB  共：{2}GB' },
+					{ type: 'separator' },
+					{
+						label: '打开主面板',
+						icon: 'static/images/home.png',
+						click: () => me.$electron.remote.getCurrentWindow().show()
+					},
+					{ label: '访问百度网盘网站' },
+					{ label: '进入回收站' },
+					{ type: 'separator' },
+					{ label: '开始全部任务', icon: 'static/images/play.png' },
+					{ label: '暂停全部任务', icon: 'static/images/pause.png' },
+					{ label: '本次传输完成关机', type: 'checkbox' },
+					{ type: 'separator' },
+					{ label: '隐藏悬浮框', type: 'checkbox' },
+					{ type: 'separator' },
+					{ label: '设置', icon: 'static/images/setting.png' },
+					{
+						label: '帮助',
+						icon: 'static/images/question.png',
+						submenu: [
+							{ label: '使用帮助' },
+							{ label: '关于' },
+							{ label: '检查更新' },
+							{ label: '问题反馈' }
+						]
+					},
+					{ type: 'separator' },
+					{ label: '锁定网盘', icon: 'static/images/lock.png' },
+					{ label: '切换账号', icon: 'static/images/switch.png' },
+					{ label: '退出', icon: 'static/images/quit.png' }
+				]
+			}
 		}
 	},
-	components: {
-		Home: () => import('@/components/Home'),
-		TransferList: () => import('@/components/TransferList'),
-		OfflineDownload: () => import('@/components/OfflineDownload'),
-		ResourceSearch: () => import('@/components/ResourceSearch')
-	},
-	watch: {},
-	created() {
-		this.getQuota()
-		// console.log(this)
-	},
 	mounted() {
-		window.addEventListener('resize', () => (this.maximized = this.isMaximized()))
+		const me = this
+
+		console.log('App', me)
+
+		me.$util
+			.visitHome()
+			.then(data => {
+				me.getQuota()
+				me.avatar = data.photo
+				me.menus.trayTemplate[0].label = data.username
+			})
+			.catch(err => {
+				console.log(err)
+				me.$message({
+					type: 'error',
+					showClose: true,
+					message: err.toString()
+				})
+			})
+
+		window.addEventListener(
+			'resize',
+			() => (this.maximized = this.$electron.remote.getCurrentWindow().isMaximized())
+		)
+	},
+	watch: {
+		quota: {
+			deep: true,
+			handler(quota) {
+				const me = this
+				me.menus.trayTemplate[1].label = `已用：${quota.usedText}  共：${quota.totalText}`
+				me.menus.tray = me.$electron.remote.Menu.buildFromTemplate(me.menus.trayTemplate)
+				me.$electron.remote.app.tray.setContextMenu(me.menus.tray)
+			}
+		}
 	},
 	methods: {
 		/**
 		 *获取网盘配额信息
 		 */
 		getQuota() {
-			let me = this
+			const me = this
+
 			me.axios
-				.get(me.URL.quota, {
+				.get(me.$constant.API.quota, {
 					params: {
 						checkfree: 1,
 						checkexpire: 1
 					}
 				})
-				.then(res => (me.quota = res.data))
+				.then(res => {
+					me.quota = {
+						used: res.data.used,
+						total: res.data.total,
+						usedText: me.$util.transferFileSize(res.data.used, 3, 0),
+						totalText: me.$util.transferFileSize(res.data.total, 3, 0)
+					}
+				})
+		},
+		/**
+		 * 跳转到个人设置
+		 */
+		onClickToUserSetting() {
+			this.$electron.remote.session.defaultSession.cookies.get(
+				{ name: 'BDUSS', domain: '.baidu.com' },
+				(error, cookies) => {
+					console.log(cookies)
+				}
+			)
 		}
 	}
 }
 </script>
-
-<style lang="less">
-</style>

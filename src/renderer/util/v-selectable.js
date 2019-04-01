@@ -29,14 +29,13 @@ export default (Vue, options = {}) => {
 			isMouseMove = false,
 			isMouseDown = false,
 			selector = (binding.value || {}).selector,
-			areaSelect = document.createElement('div'),
-			selectedClass = (binding.value || {}).selectedClass
+			areaSelect = document.createElement('div')
 
 		Object.assign(areaSelect.style, {
-			zIndex: 99999,
 			position: 'absolute',
 			pointerEvents: 'none',
 			border: '1px solid #06a8ff',
+			zIndex: Number.MAX_SAFE_INTEGER,
 			backgroundColor: 'rgba(50, 128, 252, 0.2)'
 		})
 
@@ -57,15 +56,10 @@ export default (Vue, options = {}) => {
 				ele.classList.add('text-select-none')
 			}
 
-			children.forEach((child, i) => {
-				if (child.hasAttribute('selected')) {
-					child.removeAttribute('selected')
-					child.classList.remove(selectedClass)
-					deselections.push({
-						index: i,
-						node: child,
-						selected: false
-					})
+			children.forEach(child => {
+				if (child.selected) {
+					delete child.selected
+					deselections.push(child)
 				}
 			})
 		})
@@ -107,7 +101,7 @@ export default (Vue, options = {}) => {
 
 					deselections = []
 
-					children.forEach((child, i) => {
+					children.forEach(child => {
 						let win = child.ownerDocument.defaultView,
 							offset = child.getBoundingClientRect().toJSON()
 
@@ -117,28 +111,15 @@ export default (Vue, options = {}) => {
 						})
 
 						if (isIntersectArea(range, offset)) {
-							if (!child.hasAttribute('selected')) {
-								child.setAttribute('selected', 'selected')
-								if (selectedClass) child.classList.add(selectedClass)
-								changes.push({
-									index: i,
-									node: child,
-									selected: true
-								})
+							if (!child.selected) {
+								changes.push(child)
+								child.selected = true
 							}
-							selections.push({
-								index: i,
-								node: child
-							})
+							selections.push(child)
 						} else {
-							if (child.hasAttribute('selected')) {
-								child.removeAttribute('selected')
-								child.classList.remove(selectedClass)
-								changes.push({
-									index: i,
-									node: child,
-									selected: false
-								})
+							if (child.selected) {
+								changes.push(child)
+								delete child.selected
 							}
 						}
 					})
