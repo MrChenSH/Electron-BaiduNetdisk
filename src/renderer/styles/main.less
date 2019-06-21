@@ -511,6 +511,26 @@ footer {
 	}
 }
 
+.path-chooser-dialog {
+	width: 400px;
+	.el-dialog__body {
+		padding: 0 15px;
+		.el-tree {
+			height: 260px;
+			overflow: auto;
+			border-radius: 2px;
+			border: 1px solid #e6e6e6;
+			.el-tree-node__children {
+				overflow: inherit;
+			}
+		}
+	}
+	.el-dialog__header,
+	.el-dialog__footer {
+		padding: 15px;
+	}
+}
+
 ::-webkit-scrollbar {
 	width: 8px;
 	height: 8px;

@@ -24,11 +24,11 @@ function createWindow() {
 		width: 1000,
 		// minWidth: 1000,
 		// minHeight: 660,
-		frame: false,
+		// frame: false,
 		title: '百度网盘',
 		useContentSize: true,
 		icon: 'static/images/logo.ico',
-		webPreferences: { webSecurity: false }
+		webPreferences: { webSecurity: false, nodeIntegration: true }
 	})
 
 	// mainWindow.loadURL('https://pan.baidu.com/')

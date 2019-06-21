@@ -33,13 +33,11 @@
 							<div>
 								<el-button type="text" class="username-btn">{{ $constant.YUN_DATA.username }}</el-button>
 								<el-progress
-									status="text"
 									color="#67C23A"
 									:stroke-width="6"
 									:percentage="quota.used / quota.total * 100"
-								>
-									<small>{{ quota.usedText + '/' + quota.totalText }}</small>
-								</el-progress>
+									:format="p => quota.usedText + '/' + quota.totalText"
+								></el-progress>
 							</div>
 						</div>
 						<div class="user-card">

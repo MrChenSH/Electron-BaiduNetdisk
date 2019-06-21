@@ -15,12 +15,12 @@
 				</el-menu-item>
 			</el-menu>
 			<el-progress
-				status="text"
 				color="#67C23A"
 				:stroke-width="8"
 				class="nav-progress"
 				:percentage="quota.used / quota.total * 100"
-			>{{ quota.usedText + '/' + quota.totalText }}</el-progress>
+				:format="p => quota.usedText + '/' + quota.totalText"
+			></el-progress>
 		</el-aside>
 		<el-container ref="main_view" class="main-view">
 			<el-header height="auto">
@@ -141,7 +141,7 @@
 								icon="el-icon-caret-bottom history-btn-icon"
 								@click="$util.showMenu(menus.history,'.history-btn-icon')"
 							></el-button>
-							<el-button plain @click="loadFiles" :disabled="fileLoading" icon="el-icon-refresh"></el-button>
+							<el-button plain @click="loadFiles" :disabled="loading.files" icon="el-icon-refresh"></el-button>
 						</el-col>
 						<el-col tag="span" class="split"></el-col>
 						<el-col style="flex: 1;">
@@ -173,7 +173,7 @@
 				:data="files"
 				height="100%"
 				ref="file_table"
-				v-loading="fileLoading"
+				v-loading="loading.files"
 				highlight-current-row
 				@sort-change="onSortChange"
 				@row-dblclick="onClickToOpen"
@@ -300,13 +300,13 @@
 			<el-row
 				v-else
 				class="thumb-view"
-				v-loading="fileLoading"
+				v-loading="loading.files"
 				:flex="files.length === 0"
 				@select-change="onSelectChange"
 				v-selectable="{ selector : '.thumb-item' }"
 				@contextmenu.native="$util.showMenu(menus.table)"
 			>
-				<el-col v-if="!fileLoading && files.length === 0">
+				<el-col v-if="!loading.files && files.length === 0">
 					<small style="color: #909399;">暂无数据</small>
 					<br>
 					<br>
@@ -379,6 +379,29 @@
 				@close="visible.imgPreview = false"
 			/>
 		</el-container>
+		<el-dialog :visible.sync="visible.pathChooser" custom-class="path-chooser-dialog">
+			<span slot="title">选择网盘路径</span>
+			<el-tree
+				lazy
+				accordion
+				node-key="path"
+				:props="treeProps"
+				:load="loadFolders"
+				highlight-current
+				:expand-on-click-node="false"
+				:default-expanded-keys="['/']"
+			>
+				<div slot-scope="{ node, data }" style="display: contents;">
+					<img :src="data.icon" style="margin-right: 5px;">
+					<small>{{ node.label }}</small>
+				</div>
+			</el-tree>
+			<div slot="footer">
+				<el-button style="float:left;">新建文件夹</el-button>
+				<el-button type="primary" @click="visible.pathChooser = false">确 定</el-button>
+				<el-button @click="visible.pathChooser = false">关 闭</el-button>
+			</div>
+		</el-dialog>
 	</el-container>
 </template>
 <script>
@@ -392,20 +415,38 @@ export default {
 			path: '/',
 			files: [],
 			images: [],
+			folders: [],
 			listView: true,
 			tipContent: null,
-			fileLoading: true,
 			imageIndex: null,
 			currentRow: null,
 			selectionRows: [],
 			expandRowKeys: [],
 			editingIndex: null,
 			url: me.$constant.API.list,
+			treeProps: {
+				label(data) {
+					if (data.path === '/') return '全部文件'
+					if (data.path === '/apps') return '我的应用数据'
+					return data.path.substr(data.path.lastIndexOf('/') + 1)
+				},
+				isLeaf(data) {
+					data.path = data.path || ''
+					data.icon = 'static/images/FileType/Small/FolderType.png'
+					if (data.path.startsWith('/apps')) data.icon = 'static/images/FileType/Small/Apps.png'
+					return Boolean(data.dir_empty)
+				}
+			},
+			loading: {
+				files: false,
+				folders: false
+			},
 			visible: {
 				share: false,
 				upload: true,
 				imgPreview: false,
-				recycle: false
+				recycle: false,
+				pathChooser: false
 			},
 			search: {
 				value: null,
@@ -464,7 +505,8 @@ export default {
 					},
 					{
 						id: 'moveTo',
-						label: '移动到…'
+						label: '移动到…',
+						click: () => (me.visible.pathChooser = true)
 					},
 					{
 						id: 'rename',
@@ -509,7 +551,8 @@ export default {
 					},
 					{
 						id: 'moveTo',
-						label: '移动到...'
+						label: '移动到...',
+						click: () => (me.visible.pathChooser = true)
 					},
 					{ type: 'separator' },
 					{
@@ -694,7 +737,8 @@ export default {
 					}
 				}
 			}
-		}
+		},
+		'visible.pathChooser'(visible) {}
 	},
 	computed: {
 		paths: {
@@ -723,7 +767,7 @@ export default {
 
 			me.files = []
 			me.imageIndex = null
-			me.fileLoading = true
+			me.loading.files = true
 			me.selectionRows = []
 			me.expandRowKeys = []
 			me.visible.upload = false
@@ -750,7 +794,7 @@ export default {
 			me.axios
 				.get(me.url, { params: Object.assign({}, me.params, me.pager) })
 				.then(res => {
-					me.fileLoading = false
+					me.loading.files = false
 
 					let files = res.data.list || res.data.info
 					me.pager.total = files.length
@@ -786,7 +830,28 @@ export default {
 				})
 				.catch(err => {
 					console.error(err)
-					me.fileLoading = false
+					me.loading.files = false
+				})
+		},
+		loadFolders(node, resolve) {
+			if (node.level === 0) return resolve([{ path: '/' }])
+
+			const me = this
+			me.axios
+				.get(me.$constant.API.list, {
+					params: {
+						desc: 0,
+						folder: 1,
+						showempty: 0,
+						order: 'name',
+						dir: node.data.path
+					}
+				})
+				.then(res => {
+					resolve(res.data.list)
+				})
+				.catch(err => {
+					console.error(err)
 				})
 		},
 		uploadFiles(type) {
