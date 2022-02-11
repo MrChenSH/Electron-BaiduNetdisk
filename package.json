@@ -39,7 +39,7 @@
 		"@babel/register": "^7.4.4",
 		"@vue/babel-helper-vue-jsx-merge-props": "^1.0.0",
 		"@vue/babel-preset-jsx": "^1.0.0",
-		"ajv": "^6.5.0",
+		"ajv": "^6.12.3",
 		"babel-loader": "^8.0.6",
 		"babel-plugin-istanbul": "^5.1.1",
 		"babili-webpack-plugin": "^0.1.2",
